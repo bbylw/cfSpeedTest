@@ -1,181 +1,428 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CloudflareSpeedTest 优选IP</title>
-    <style>
-      :root {
-        --ph-orange: #ff9000;
-        --ph-black: #000000;
-        --ph-dark: #1b1b1b;
-        --ph-gray: #282828;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="一个优雅的 Cloudflare IP 优选工具聚合页面，集成了多个数据源的测速结果" />
+  <title>CloudflareSpeedTest 优选IP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+  <style>
+    :root {
+      --ph-orange: #ff9000;
+      --ph-orange-light: #ffb347;
+      --ph-black: #000000;
+      --ph-dark: #121212;
+      --ph-gray: #1e1e1e;
+      --ph-gray-light: #2d2d2d;
+      --ph-blue: #3a86ff;
+      --ph-purple: #8338ec;
+      --ph-text: #f8f9fa;
+      --ph-text-secondary: #adb5bd;
+      --ph-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      --ph-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --ph-gradient: linear-gradient(135deg, var(--ph-dark) 0%, #000000 100%);
+      --ph-gradient-accent: linear-gradient(135deg, var(--ph-orange) 0%, var(--ph-orange-light) 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--ph-gradient);
+      color: var(--ph-text);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      line-height: 1.6;
+      transition: var(--ph-transition);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px 15px;
+      position: relative;
+    }
+
+    .logo {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 700;
+      color: var(--ph-text);
+      padding: 10px 20px;
+      border-radius: 8px;
+      word-break: break-word;
+      display: inline-block;
+      position: relative;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      letter-spacing: -0.5px;
+      background: linear-gradient(45deg, #ff9000, #ff5e62, #ff9000);
+      background-size: 200% 200%;
+      animation: gradient 5s ease infinite;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
       }
 
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 60px;
+      height: 4px;
+      background: var(--ph-gradient-accent);
+      transform: translateX(-50%);
+      border-radius: 2px;
+      transition: var(--ph-transition);
+    }
+
+    .logo:hover::after {
+      width: 100px;
+    }
+
+    .logo span {
+      background: var(--ph-gradient-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+    }
+
+    .source-links {
+      text-align: center;
+      margin: 30px auto;
+      padding: 20px;
+      background: var(--ph-gray);
+      border-radius: 12px;
+      max-width: 800px;
+      box-shadow: var(--ph-card-shadow);
+      position: relative;
+      overflow: hidden;
+      transition: var(--ph-transition);
+      transform: translateY(0);
+    }
+
+    .source-links::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--ph-gradient-accent);
+    }
+
+    .source-links:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .source-links a {
+      color: var(--ph-orange);
+      text-decoration: none;
+      margin: 0 15px;
+      padding: 10px 20px;
+      border: 2px solid var(--ph-orange);
+      border-radius: 8px;
+      transition: var(--ph-transition);
+      display: inline-block;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .source-links a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--ph-gradient-accent);
+      transition: var(--ph-transition);
+      z-index: -1;
+    }
+
+    .source-links a:hover {
+      color: var(--ph-black);
+      border-color: transparent;
+    }
+
+    .source-links a:hover::before {
+      left: 0;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin: 30px auto;
+      max-width: 1600px;
+    }
+
+    .content-container {
+      background: var(--ph-gray);
+      border-radius: 12px;
+      overflow: hidden;
+      height: 800px;
+      box-shadow: var(--ph-card-shadow);
+      transition: var(--ph-transition);
+      transform: translateY(0);
+      position: relative;
+    }
+
+    .content-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .content-title {
+      background: var(--ph-gradient-accent);
+      color: var(--ph-black);
+      padding: 15px 20px;
+      font-weight: 600;
+      text-align: center;
+      font-size: clamp(14px, 3vw, 16px);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .content-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .iframe-container {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 50px);
+      overflow: hidden;
+    }
+
+    .iframe-loader {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--ph-gray-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: opacity 0.5s ease;
+    }
+
+    .iframe-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid var(--ph-gray);
+      border-bottom-color: var(--ph-orange);
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    iframe.loaded {
+      opacity: 1;
+    }
+
+    /* 自定义滚动条 */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--ph-gray);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--ph-gray-light);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--ph-orange);
+    }
+
+    /* 动画效果 */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header,
+    .source-links,
+    .content-grid {
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    .source-links {
+      animation-delay: 0.2s;
+    }
+
+    .content-grid {
+      animation-delay: 0.4s;
+    }
+
+    @media (max-width: 1024px) {
       body {
-        background-color: var(--ph-black);
-        color: #ffffff;
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-        min-height: 100vh;
-      }
-
-      .header {
-        text-align: center;
-        margin-bottom: 20px;
-        padding: 0 15px;
-      }
-
-      .logo {
-        font-size: clamp(24px, 5vw, 36px);
-        font-weight: bold;
-        color: #ffffff;
-        background: var(--ph-black);
-        padding: 10px 20px;
-        border-radius: 5px;
-        word-break: break-word;
-      }
-
-      .logo span {
-        color: var(--ph-orange);
-      }
-
-      .source-links {
-        text-align: center;
-        margin: 20px auto;
         padding: 15px;
-        background: var(--ph-gray);
-        border-radius: 8px;
-        max-width: 800px;
-      }
-
-      .source-links a {
-        color: var(--ph-orange);
-        text-decoration: none;
-        margin: 0 15px;
-        padding: 8px 15px;
-        border: 1px solid var(--ph-orange);
-        border-radius: 5px;
-        transition: all 0.3s ease;
-        display: inline-block;
-      }
-
-      .source-links a:hover {
-        background: var(--ph-orange);
-        color: var(--ph-black);
       }
 
       .content-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 20px;
+      }
+
+      .source-links {
+        padding: 15px;
         margin: 20px auto;
-        max-width: 1600px;
+      }
+
+      .source-links a {
+        display: block;
+        margin: 15px auto;
+        max-width: 300px;
+        font-size: 15px;
       }
 
       .content-container {
-        background: var(--ph-gray);
-        border-radius: 8px;
-        overflow: hidden;
-        height: 800px;
+        height: 600px;
       }
 
       .content-title {
-        background-color: var(--ph-orange);
-        color: var(--ph-black);
-        padding: 10px 20px;
-        font-weight: bold;
-        text-align: center;
-        font-size: clamp(14px, 3vw, 16px);
+        padding: 12px 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
       }
 
-      iframe {
-        width: 100%;
-        height: calc(100% - 40px);
-        border: none;
-        background: white;
+      .header {
+        margin-bottom: 20px;
       }
 
-      @media (max-width: 1024px) {
-        body {
-          padding: 10px;
-        }
-
-        .content-grid {
-          grid-template-columns: 1fr;
-          gap: 15px;
-        }
-
-        .source-links {
-          padding: 10px;
-          margin: 15px auto;
-        }
-
-        .source-links a {
-          display: block;
-          margin: 10px auto;
-          max-width: 300px;
-          font-size: 14px;
-        }
-
-        .content-container {
-          height: 600px;
-        }
-
-        .content-title {
-          padding: 8px 15px;
-        }
+      .content-container {
+        height: 500px;
       }
 
-      @media (max-width: 480px) {
-        body {
-          padding: 5px;
-        }
-
-        .header {
-          margin-bottom: 15px;
-        }
-
-        .content-container {
-          height: 500px;
-        }
-
-        .source-links a {
-          padding: 6px 12px;
-          font-size: 13px;
-        }
+      .source-links a {
+        padding: 8px 15px;
+        font-size: 14px;
       }
-    </style>
-  </head>
-  <body>
-    <div class="header">
-      <div class="logo">Cloudflare<span>SpeedTest</span></div>
-    </div>
+    }
+  </style>
+</head>
 
-    <div class="source-links">
-      <a href="https://ip.164746.xyz/" target="_blank"
-        >访问 CF Speed DNS 源站</a
-      >
-      <a
-        href="https://www.wetest.vip/page/cloudflare/address_v4.html"
-        target="_blank"
-        >访问 WeTest 源站</a
-      >
-    </div>
+<body>
+  <div class="header">
+    <div class="logo">Cloudflare<span>SpeedTest</span></div>
+  </div>
 
-    <div class="content-grid">
-      <div class="content-container">
-        <div class="content-title">优选IP (自动更新)</div>
-        <iframe src="https://ip.164746.xyz/" title="CF Speed DNS"></iframe>
+  <div class="source-links">
+    <a href="https://ip.164746.xyz/" target="_blank">
+      <i class='bx bx-link-external'></i> 访问 CF Speed DNS 源站
+    </a>
+    <a href="https://www.wetest.vip/page/cloudflare/address_v4.html" target="_blank">
+      <i class='bx bx-link-external'></i> 访问 WeTest 源站
+    </a>
+  </div>
+
+  <div class="content-grid">
+    <div class="content-container">
+      <div class="content-title">
+        <i class='bx bx-refresh'></i> 优选IP (自动更新)
       </div>
-      <div class="content-container">
-        <div class="content-title">优选IP (WeTest)</div>
-        <iframe
-          src="https://www.wetest.vip/page/cloudflare/address_v4.html"
-          title="WeTest"
-        ></iframe>
+      <div class="iframe-container">
+        <div class="iframe-loader" id="loader1">
+          <span class="loader"></span>
+        </div>
+        <iframe src="https://ip.164746.xyz/" title="CF Speed DNS" id="iframe1"
+          onload="this.classList.add('loaded'); document.getElementById('loader1').classList.add('hidden');"></iframe>
       </div>
     </div>
-  </body>
+    <div class="content-container">
+      <div class="content-title">
+        <i class='bx bx-radar'></i> 优选IP (WeTest)
+      </div>
+      <div class="iframe-container">
+        <div class="iframe-loader" id="loader2">
+          <span class="loader"></span>
+        </div>
+        <iframe src="https://www.wetest.vip/page/cloudflare/address_v4.html" title="WeTest" id="iframe2"
+          onload="this.classList.add('loaded'); document.getElementById('loader2').classList.add('hidden');"></iframe>
+      </div>
+    </div>
+  </div>
+</body>
+
 </html>
