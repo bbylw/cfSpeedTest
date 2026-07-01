@@ -380,6 +380,140 @@
         font-size: 14px;
       }
     }
+    
+    /* WeTest API Table Styles */
+    .wetest-table-container {
+      padding: 15px;
+      height: 100%;
+      overflow-y: auto;
+      background: var(--ph-gray);
+    }
+
+    .wetest-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+      color: var(--ph-text);
+    }
+
+    .wetest-table tr {
+      border-bottom: 1px solid var(--ph-gray-light);
+      transition: background 0.2s;
+    }
+
+    .wetest-table tr:hover {
+      background: var(--ph-gray-light);
+    }
+
+    .wetest-table th {
+      padding: 12px 8px;
+      border-bottom: 2px solid var(--ph-gray-light);
+      color: var(--ph-text-secondary);
+      font-weight: 600;
+    }
+
+    .wetest-table td {
+      padding: 12px 8px;
+      vertical-align: middle;
+    }
+
+    .wetest-line {
+      font-weight: 600;
+      color: var(--ph-orange);
+    }
+
+    .wetest-ip {
+      font-family: monospace;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wetest-copy-btn {
+      color: var(--ph-blue);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(58, 134, 255, 0.1);
+      border: 1px solid rgba(58, 134, 255, 0.2);
+      transition: var(--ph-transition);
+    }
+
+    .wetest-copy-btn:hover {
+      background: rgba(58, 134, 255, 0.2);
+    }
+
+    .wetest-latency {
+      font-weight: 600;
+      color: #4caf50;
+    }
+
+    .wetest-fallback {
+      padding: 40px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--ph-text);
+    }
+
+    .wetest-fallback-icon {
+      font-size: 56px;
+      margin-bottom: 15px;
+      color: var(--ph-orange);
+      animation: pulse 2s infinite;
+    }
+
+    .wetest-fallback h3 {
+      margin-bottom: 12px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--ph-text);
+    }
+
+    .wetest-fallback p {
+      color: var(--ph-text-secondary);
+      max-width: 340px;
+      font-size: 13px;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    .wetest-fallback-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 12px 24px;
+      background: var(--ph-gradient-accent);
+      color: var(--ph-black);
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(255, 144, 0, 0.4);
+      transition: var(--ph-transition);
+    }
+
+    .wetest-fallback-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 144, 0, 0.6);
+    }
+
+    .wetest-footer {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 11px;
+      color: var(--ph-text-secondary);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
   </style>
 </head>
 
@@ -391,9 +525,9 @@
   <div class="source-links">
     <a href="https://ip.164746.xyz/" target="_blank">
       <i class='bx bx-link-external'></i> 访问 CF Speed DNS 源站
-      <a href="https://ipdb.030101.xyz/" target="_blank">
-        <i class='bx bx-link-external'></i> 访问 ipdb 源站
-      </a>
+    </a>
+    <a href="https://ipdb.030101.xyz/" target="_blank">
+      <i class='bx bx-link-external'></i> 访问 ipdb 源站
     </a>
     <a href="https://www.wetest.vip/page/cloudflare/address_v4.html" target="_blank">
       <i class='bx bx-link-external'></i> 访问 WeTest 源站
@@ -417,15 +551,192 @@
       <div class="content-title">
         <i class='bx bx-radar'></i> 优选IP (WeTest)
       </div>
-      <div class="iframe-container">
+      <div class="iframe-container" id="wetest-container">
         <div class="iframe-loader" id="loader2">
           <span class="loader"></span>
         </div>
-        <iframe src="https://www.wetest.vip/page/cloudflare/address_v4.html" title="WeTest" id="iframe2"
-          onload="this.classList.add('loaded'); document.getElementById('loader2').classList.add('hidden');"></iframe>
       </div>
     </div>
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const container = document.getElementById('wetest-container');
+      const loader = document.getElementById('loader2');
+      
+      const targetUrl = 'https://www.wetest.vip/api/cf2dns/get_cloudflare_ip?key=o1zrmHAF&type=v4';
+      
+      // List of CORS proxies to try
+      const proxies = [
+        url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      ];
+      
+      let proxyIndex = 0;
+      
+      function tryFetch() {
+        if (proxyIndex >= proxies.length) {
+          showFallback();
+          return;
+        }
+        
+        const proxyUrl = proxies[proxyIndex](targetUrl);
+        fetch(proxyUrl)
+          .then(response => {
+            if (!response.ok) throw new Error('Network response not ok');
+            return response.json();
+          })
+          .then(data => {
+            let result = data;
+            // allorigins wraps response in a stringified JSON contents
+            if (data && data.contents) {
+              try {
+                result = JSON.parse(data.contents);
+              } catch (e) {
+                throw new Error('Failed to parse allorigins contents');
+              }
+            }
+            
+            if (result && result.status && result.code === 200 && result.info) {
+              renderTable(result.info);
+            } else {
+              throw new Error('Invalid data structure');
+            }
+          })
+          .catch(error => {
+            console.warn(`Proxy ${proxyIndex} failed:`, error);
+            proxyIndex++;
+            tryFetch();
+          });
+      }
+      
+      function renderTable(info) {
+        if (loader) loader.style.display = 'none';
+        
+        let allIps = [];
+        const lines = {
+          'CM': '移动',
+          'CU': '联通',
+          'CT': '电信',
+          'CN': '三网'
+        };
+        
+        for (let key in info) {
+          if (info.hasOwnProperty(key)) {
+            const lineName = lines[key] || key;
+            const items = Array.isArray(info[key]) ? info[key] : [];
+            items.forEach(item => {
+              allIps.push({
+                line: lineName,
+                ip: item.ip,
+                bandwidth: item.bandwidth ? `${item.bandwidth} MB` : '-',
+                speed: item.speed ? `${item.speed} kB/s` : '-',
+                latency: item.rtt_avg ? `${item.rtt_avg} ms` : '-',
+                colo: item.colo || '-'
+              });
+            });
+          }
+        }
+        
+        if (allIps.length === 0) {
+          showFallback();
+          return;
+        }
+        
+        // Sort by line type and then latency
+        const lineOrder = { '电信': 1, '联通': 2, '移动': 3, '三网': 4 };
+        allIps.sort((a, b) => {
+          const orderA = lineOrder[a.line] || 99;
+          const orderB = lineOrder[b.line] || 99;
+          if (orderA !== orderB) return orderA - orderB;
+          return parseInt(a.latency) - parseInt(b.latency);
+        });
+        
+        let html = `
+          <div class="wetest-table-container">
+            <table class="wetest-table">
+              <thead>
+                <tr>
+                  <th>线路</th>
+                  <th>优选地址</th>
+                  <th>带宽</th>
+                  <th>峰值</th>
+                  <th>延迟</th>
+                  <th>节点</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        allIps.forEach(item => {
+          html += `
+            <tr>
+              <td class="wetest-line">${item.line}</td>
+              <td>
+                <div class="wetest-ip">
+                  <span>${item.ip}</span>
+                  <span class="wetest-copy-btn" onclick="copyText('${item.ip}')">复制</span>
+                </div>
+              </td>
+              <td>${item.bandwidth}</td>
+              <td>${item.speed}</td>
+              <td class="wetest-latency">${item.latency}</td>
+              <td style="color: var(--ph-text-secondary);">${item.colo}</td>
+            </tr>
+          `;
+        });
+        
+        html += `
+              </tbody>
+            </table>
+            <div class="wetest-footer">
+              数据源于 WeTest.vip 官方 API (每15分钟更新)
+            </div>
+          </div>
+        `;
+        
+        container.innerHTML = html;
+      }
+      
+      window.copyText = function(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert('已复制 IP: ' + text);
+        }).catch(err => {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            alert('已复制 IP: ' + text);
+          } catch (e) {
+            console.error('Copy failed:', e);
+          }
+          document.body.removeChild(textarea);
+        });
+      };
+      
+      function showFallback() {
+        if (loader) loader.style.display = 'none';
+        container.innerHTML = `
+          <div class="wetest-fallback">
+            <div class="wetest-fallback-icon">
+              <i class='bx bx-shield-quarter'></i>
+            </div>
+            <h3>无法直接加载 WeTest 数据</h3>
+            <p>
+              由于 WeTest 官方源站启用了安全性同源策略 (X-Frame-Options)，浏览器拒绝了在此 iframe 中加载其网页。
+            </p>
+            <a href="https://www.wetest.vip/page/cloudflare/address_v4.html" target="_blank" class="wetest-fallback-btn">
+              <i class='bx bx-link-external' style="margin-right: 8px; font-size: 18px;"></i> 访问 WeTest 官方源站
+            </a>
+          </div>
+        `;
+      }
+      
+      tryFetch();
+    });
+  </script>
 </body>
 
 </html>
